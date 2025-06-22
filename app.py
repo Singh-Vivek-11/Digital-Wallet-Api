@@ -11,22 +11,22 @@ import urllib.parse
 app = Flask(__name__)
 load_dotenv()
 
-# MySQL Configuration from environment variables
+
 MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
 MYSQL_USER = os.getenv('MYSQL_USER', 'root')
 MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'Vivek@3938')
 MYSQL_DB = os.getenv('MYSQL_DB', 'digital_wallet')
-# URL-encode the password to handle special characters
+
 encoded_password = urllib.parse.quote(MYSQL_PASSWORD)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{MYSQL_USER}:{encoded_password}@{MYSQL_HOST}/{MYSQL_DB}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your_secret_key')
 db = SQLAlchemy(app)
 
-# Currency API Key (replace with your actual key from currencyapi.com)
+
 CURRENCY_API_KEY = os.getenv('CURRENCY_API_KEY', 'your_currency_api_key')
 
-# Database Models
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -47,7 +47,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(255), nullable=False)
 
-# Basic Authentication Middleware
+
 def authenticate():
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Basic '):
@@ -64,12 +64,12 @@ def authenticate():
     except:
         abort(401, description="Invalid Authorization header format")
 
-# Root Route to Avoid 404
+
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({"message": "Welcome to the Digital Wallet API"}), 200
 
-# 1. Register User
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -89,7 +89,7 @@ def register():
     
     return jsonify({"message": "User created"}), 201
 
-# 2. Fund Account
+
 @app.route('/fund', methods=['POST'])
 def fund_account():
     user = authenticate()
@@ -105,7 +105,7 @@ def fund_account():
     
     return jsonify({"balance": user.balance})
 
-# 3. Pay Another User
+
 @app.route('/pay', methods=['POST'])
 def pay_user():
     user = authenticate()
@@ -131,7 +131,7 @@ def pay_user():
     
     return jsonify({"balance": user.balance})
 
-# 4. Check Balance
+
 @app.route('/bal', methods=['GET'])
 def check_balance():
     user = authenticate()
@@ -147,7 +147,7 @@ def check_balance():
     
     return jsonify({"balance": round(balance, 2), "currency": currency})
 
-# 5. View Transaction History
+
 @app.route('/stmt', methods=['GET'])
 def transaction_history():
     user = authenticate()
@@ -161,10 +161,10 @@ def transaction_history():
         } for t in transactions
     ])
 
-# 6. Add Product
+
 @app.route('/product', methods=['POST'])
 def add_product():
-    authenticate()  # Only authenticated users can add products
+    authenticate()  
     data = request.get_json()
     if not data or not data.get('name') or not data.get('price') or not data.get('description'):
         abort(400, description="Name, price, and description are required")
@@ -175,7 +175,7 @@ def add_product():
     
     return jsonify({"id": product.id, "message": "Product added"}), 201
 
-# 7. List All Products
+
 @app.route('/product', methods=['GET'])
 def list_products():
     products = Product.query.all()
@@ -188,7 +188,7 @@ def list_products():
         } for p in products
     ])
 
-# 8. Buy a Product
+
 @app.route('/buy', methods=['POST'])
 def buy_product():
     user = authenticate()
@@ -210,7 +210,7 @@ def buy_product():
     
     return jsonify({"message": "Product purchased", "balance": user.balance})
 
-# Error Handling
+
 @app.errorhandler(400)
 def bad_request(error):
     return jsonify({"error": error.description}), 400
@@ -225,5 +225,5 @@ def server_error(error):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Create database tables
+        db.create_all()  
     app.run(debug=True)
